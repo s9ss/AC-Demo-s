@@ -1,0 +1,44 @@
+-- Sandyy/s9ss anti-cheat sample type "fly"
+-- all right reserved to sandyy and sandyy only!
+
+local CUMULATIVE_INTERVAL = 5 -- seconds
+local cumulativeY = 0
+local intervalCount = 0
+
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function(character)
+        task.wait(1)
+        local humanoidRootPart = character:WaitForChild("HumanoidRootPart", 5)
+        if not humanoidRootPart then return end
+
+        local lastY = humanoidRootPart.Position.Y
+        cumulativeY = 0
+        intervalCount = 0
+
+        while character.Parent and player.Parent do
+            task.wait(CHECK_INTERVAL)
+            local currentY = humanoidRootPart.Position.Y
+            local humanoid = character:FindFirstChildOfClass("Humanoid")
+
+            if humanoid and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
+                lastY = currentY
+                continue
+            end
+
+            cumulativeY = cumulativeY + math.abs(currentY - lastY)
+            intervalCount = intervalCount + 1
+
+            if intervalCount >= CUMULATIVE_INTERVAL then
+                if cumulativeY > (MAX_ALLOWED_JUMP * CUMULATIVE_INTERVAL) then
+                    warn("[ANTI-FLY] " .. player.Name .. " was detected flying! Kicking...")
+                    player:Kick("Flying detected. If this was a mistake, please rejoin.")
+                    break
+                end
+                cumulativeY = 0
+                intervalCount = 0
+            end
+
+            lastY = currentY
+        end
+    end)
+end)
